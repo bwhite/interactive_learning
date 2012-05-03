@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>Image Positive/Negative Selector</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="">
+    <meta name="author" content="">
+
+    <!-- Le styles -->
+    <link href="http://twitter.github.com/bootstrap/assets/css/bootstrap.css" rel="stylesheet">
+    <style>
+      body {
+        padding-top: 60px; /* 60px to make the container go all the way to the bottom of the topbar */
+      }
+      .data_image_div {
+        float: left;
+        border-style: solid;
+        border-color: white;
+        border-size: 10px;
+      }
+      .clicked_data_image_div {
+        border-color: red;
+      }
+    </style>
+    <link href="http://twitter.github.com/bootstrap/assets/css/bootstrap-responsive.css" rel="stylesheet">
+
+    <!-- Le HTML5 shim, for IE6-8 support of HTML5 elements -->
+    <!--[if lt IE 9]>
+      <script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+
+    <!-- Le fav and touch icons -->
+    <link rel="shortcut icon" href="http://twitter.github.com/bootstrap/assets/ico/favicon.ico">
+    <link rel="apple-touch-icon-precomposed" sizes="144x144" href="http://twitter.github.com/bootstrap/assets/ico/apple-touch-icon-144-precomposed.png">
+    <link rel="apple-touch-icon-precomposed" sizes="114x114" href="http://twitter.github.com/bootstrap/assets/ico/apple-touch-icon-114-precomposed.png">
+    <link rel="apple-touch-icon-precomposed" sizes="72x72" href="http://twitter.github.com/bootstrap/assets/ico/apple-touch-icon-72-precomposed.png">
+    <link rel="apple-touch-icon-precomposed" href="http://twitter.github.com/bootstrap/assets/ico/apple-touch-icon-57-precomposed.png">
+    <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js"></script>
+  </head>
+
+  <body>
+    <script type="text/javascript">
+      function ajax(url, method, data, success, before_send, fail) {
+          if (typeof before_send == 'undefined' ) before_send = function() {};
+          if (typeof success == 'undefined' ) success = function() {};
+          if (typeof fail == 'undefined' ) fail = function() {};
+          var request = $.ajax({
+          type: method,
+          url: url,
+          dataType: "json",
+          contentType: "application/json; charset=utf-8",
+          beforeSend: before_send,
+          data: data,
+          success: success
+          });
+          request.fail(fail);
+      }
+
+      function click_image() {
+          $(this).toggleClass('clicked_data_image_div');
+      }
+
+      function click_action(action) {
+          var els = $('.clicked_data_image_div');
+          var urls = els.children().map(function () {return this.src}).get();
+          ajax("/result/", "post", JSON.stringify({'urls': urls, 'action': action}), function () {els.remove(); update_images();});
+      }
+
+      function click_delete() {
+          click_action('delete');
+      }
+
+      function click_positive() {
+          click_action('positive');
+      }
+
+      function click_negative() {
+          click_action('negative');
+      }
+      
+      function click_enlarge() {
+          var els = $('.data_image');
+          var sz = (parseInt(els.css('height')) + 50).toString() + 'px';
+          els.css({height: sz, width: sz});
+      };
+
+      function click_shrink() {
+          var els = $('.data_image');
+          var sz = (parseInt(els.css('height')) - 50).toString() + 'px';
+          if (sz != '0px') {
+              els.css({height: sz, width: sz});
+          }
+      };
+
+      function update_images() {
+         var cur_num_images = num_images - $('.data_image_div').length;
+         var images = available_images.slice(0, cur_num_images);
+         available_images = available_images.slice(cur_num_images);
+          $.each(images, function(index, value) {   
+              var new_image = $('<img>', {src: value, width: 100, height: 100, class: 'data_image'});
+              $('#images').append($('<div>', {class: 'data_image_div'}).append(new_image));
+          });
+          $('.data_image_div').slice(num_images - cur_num_images).click(click_image);
+     }
+
+     function initial_images(images) {
+         available_images = images;
+         update_images();
+     }
+
+     function click_kill() {
+        $.get('/kill')
+     }
+
+      $(document).ready(function () {
+          num_images = 100;
+          $.getJSON('images.js', initial_images);
+          $('#enlarge_button').click(click_enlarge);
+          $('#shrink_button').click(click_shrink);
+          $('#delete_button').click(click_delete);
+          $('#positive_button').click(click_positive);
+          $('#negative_button').click(click_negative);
+          $('#kill_button').click(click_kill);
+      });
+    </script>
+
+    <div class="navbar navbar-fixed-top">
+      <div class="navbar-inner">
+        <div class="container">
+          <div class="btn-toolbar" style="margin: 0px;">
+      <div class="btn-group">
+        <button class="btn btn-inverse dropdown-toggle" data-toggle="dropdown">Apply Selected <span class="caret"></span></button>
+        <ul class="dropdown-menu">
+          <li><a id="positive_button">Positive</a></li>
+          <li><a id="negative_button">Negative</a></li>
+          <li class="divider"></li>
+          <li><a id="delete_button">Delete</a></li>
+        </ul>
+      </div><!-- /btn-group -->
+      <div class="btn-group">
+        <button class="btn btn-inverse dropdown-toggle" data-toggle="dropdown">View <span class="caret"></span></button>
+        <ul class="dropdown-menu">
+          <li><a id="enlarge_button">Enlarge Images</a></li>
+          <li><a id="shrink_button">Shrink Images</a></li>
+        </ul>
+      </div><!-- /btn-group -->
+      <div class="btn-group">
+      <button class="btn btn-danger" id="kill_button">Kill</span></button>
+      </div>
+      </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="images">
+    </div>
+
+
+
+    </div> <!-- /container -->
+
+    <!-- Le javascript
+    ================================================== -->
+    <!-- Placed at the end of the document so the pages load faster -->
+    <script src="http://twitter.github.com/bootstrap/assets/js/jquery.js"></script>
+    <script src="http://twitter.github.com/bootstrap/assets/js/bootstrap-transition.js"></script>
+    <script src="http://twitter.github.com/bootstrap/assets/js/bootstrap-alert.js"></script>
+    <script src="http://twitter.github.com/bootstrap/assets/js/bootstrap-modal.js"></script>
+    <script src="http://twitter.github.com/bootstrap/assets/js/bootstrap-dropdown.js"></script>
+    <script src="http://twitter.github.com/bootstrap/assets/js/bootstrap-scrollspy.js"></script>
+    <script src="http://twitter.github.com/bootstrap/assets/js/bootstrap-tab.js"></script>
+    <script src="http://twitter.github.com/bootstrap/assets/js/bootstrap-tooltip.js"></script>
+    <script src="http://twitter.github.com/bootstrap/assets/js/bootstrap-popover.js"></script>
+    <script src="http://twitter.github.com/bootstrap/assets/js/bootstrap-button.js"></script>
+    <script src="http://twitter.github.com/bootstrap/assets/js/bootstrap-collapse.js"></script>
+    <script src="http://twitter.github.com/bootstrap/assets/js/bootstrap-carousel.js"></script>
+    <script src="http://twitter.github.com/bootstrap/assets/js/bootstrap-typeahead.js"></script>
+
+  </body>
+</html>
